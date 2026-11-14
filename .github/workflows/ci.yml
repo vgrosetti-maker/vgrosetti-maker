@@ -1,0 +1,27 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  readme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: The checker rejects what it should (negative cases)
+        run: |
+          expect_fail() {
+            printf '%s\n' "$2" > "$RUNNER_TEMP/case.md"
+            if bash .github/check-readme.sh "$RUNNER_TEMP/case.md"; then
+              echo "the checker passed a README that $1"; exit 1
+            fi
+          }
+          expect_fail "has no H1, only an H2" "## Section"
+          expect_fail "has two H1" "$(printf '# One\n\n# Two')"
+          expect_fail "has an em dash" "$(printf '# Title\n\nA \xe2\x80\x94 B')"
+          expect_fail "links to another host" "$(printf '# Title\n\n[x](https://example.com)')"
+          printf '# Title\n\n## Section\n\n[x](https://nordleads.org)\n' > "$RUNNER_TEMP/good.md"
+          bash .github/check-readme.sh "$RUNNER_TEMP/good.md"
+      - name: The README passes
+        run: bash .github/check-readme.sh README.md
