@@ -1,0 +1,23 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  readme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: The README exists and has one title
+        run: |
+          test -s README.md
+          test "$(grep -c '^#' README.md)" -eq 1
+      - name: No em dash
+        run: |
+          if grep -n $'\xe2\x80\x94' README.md; then exit 1; fi
+      - name: Links only point at the profile and the studio site
+        run: |
+          grep -oE 'https?://[^) >`]+' README.md | sort -u > urls.txt
+          cat urls.txt
+          if grep -vE '^https://(github\.com/vgrosetti-maker(/|$)|nordleads\.org(/|$))' urls.txt; then exit 1; fi
